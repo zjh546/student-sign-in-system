@@ -46,7 +46,7 @@ const selectSignHistory = async (user_id) => {
   const statement = `select sgroup.group_name, initiator.initiator_name, sign_user.sign_time from initiator
   join sgroup on sgroup.initiator_id = initiator.initiator_id
   join sign on sign.group_id = sgroup.group_id
-  join sign_user on sign_user.sign_id = sign.sign_id and user_id = ${user_id};`;
+  join sign_user on sign_user.sign_id = sign.sign_id and user_id = '${user_id}';`;
   const result = await connections.execute(statement);
 
   return result[0];
