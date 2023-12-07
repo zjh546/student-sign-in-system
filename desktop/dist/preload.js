@@ -1,0 +1,1 @@
+var e=require("electron");e.contextBridge.exposeInMainWorld("DeskTopHeader",{HeaderMin:()=>e.ipcRenderer.send("HeaderMin"),HeaderMax:()=>e.ipcRenderer.send("HeaderMax"),HeaderClose:()=>e.ipcRenderer.send("HeaderClose")});e.contextBridge.exposeInMainWorld("DeskMainAPI",{DownloadImage:(a,r)=>e.ipcRenderer.invoke("DownloadImage",a,r)});
