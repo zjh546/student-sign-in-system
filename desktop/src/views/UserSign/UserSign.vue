@@ -17,7 +17,7 @@
                   </div>
                   <div class="text">
                     <div class="name">欢迎 {{ userInfoData.user_name }}</div>
-                    <div class="mac">aojfgagfhoiawhfa123123</div>
+                    <div class="mac">{{ mac_show }}</div>
                   </div>
                 </div>
 
@@ -45,8 +45,8 @@
               <el-row>
                 <template v-for="item of historyData" :key="item">
                   <el-col :span="8">
-                    <div class="card success">
-                      <div class="top">签到成功</div>
+                    <div class="card" :class="item.is_mac_error === 1 ? 'success' : 'fail'">
+                      <div class="top">{{ item.is_mac_error === 1 ? "签到成功" : "签到异常" }}</div>
                       <div class="bottom">
                         <div class="group">{{ item.group_name }} & {{ item.initiator_name }}</div>
                         <div class="time">{{ formatUTC(item.sign_time) }}</div>
@@ -123,7 +123,6 @@
 
         <template #footer>
           <div class="dialog-footer">
-            <!-- <el-button @click="loginCancelClick">取消</el-button> -->
             <el-button type="primary" @click="loginConfirmClick"> 登录 </el-button>
           </div>
         </template>
@@ -252,11 +251,17 @@ const loginConfirmClick = async () => {
 };
 
 // 签到
+const mac_show = ref(""); // 获取电脑mac
 const signinClick = async (event: MouseEvent) => {
   const { code } = editFormData;
 
+  toggleTheme(event); // 执行动画
+
+  const mac = await window.DeskMainAPI.getMacV2();
+  mac_show.value = mac;
+
   if (code) {
-    const result = await userSign(code);
+    const result = await userSign(code, mac);
 
     if (result.code === "ERR_NETWORK") {
       ElMessage({
@@ -265,7 +270,7 @@ const signinClick = async (event: MouseEvent) => {
       });
     } else {
       if (result.data === "ok") {
-        toggleTheme(event); // 执行动画
+        // toggleTheme(event); // 执行动画
 
         ElMessage({
           message: "签到成功~",
@@ -276,7 +281,7 @@ const signinClick = async (event: MouseEvent) => {
 
       const data = result.response.data;
       if (data.data === "exist~") {
-        toggleTheme(event); // 执行动画
+        // toggleTheme(event); // 执行动画
 
         ElMessage({
           message: "你已经签到了~",

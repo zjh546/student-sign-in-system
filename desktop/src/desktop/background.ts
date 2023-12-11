@@ -1,6 +1,7 @@
 import path from "path";
 
 import { app, BrowserWindow, Menu, ipcMain, dialog } from "electron";
+import { getMac } from "@lzwme/get-physical-address";
 
 import { rigthDeskEnum } from "@/types/common";
 import { openService } from "@/server";
@@ -34,6 +35,7 @@ function createWindow() {
     win.close();
   });
   // ipc双向监听
+  // 下载图片
   ipcMain.handle("DownloadImage", (event, downloadImgPath, downloadImg) => {
     return new Promise((resolve, reject) => {
       win.webContents.downloadURL(downloadImgPath);
@@ -47,6 +49,15 @@ function createWindow() {
         });
       });
     });
+  });
+  // 获取电脑Mac
+  ipcMain.handle("getMacV2", async () => {
+    try {
+      const mac = await getMac();
+      return mac;
+    } catch (error) {
+      return "error~";
+    }
   });
 
   // 加载资源 - 区分开发环境还是生产环境

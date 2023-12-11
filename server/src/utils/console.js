@@ -39,8 +39,22 @@ const chalkThirdConsole = (text, isReturn = false) => {
   console.log(out);
 };
 
+/**
+ * 控制台美化 - 成功
+ * @param {*} text 输出文字
+ * @param {*} isReturn 是否返回，不直接输出
+ * @returns 美化后的字符串
+ */
+const chalkSuccessConsole = (text, isReturn = false) => {
+  const out = chalk.bold.italic.rgb(16, 124, 16)(text);
+
+  if (isReturn) return out;
+  console.log(out);
+};
+
 module.exports = {
   chalkMainConsole,
   chalkSecondConsole,
-  chalkThirdConsole
+  chalkThirdConsole,
+  chalkSuccessConsole
 };

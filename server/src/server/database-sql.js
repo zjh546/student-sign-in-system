@@ -34,8 +34,8 @@ const selectSignBySignCode = async (sign_code) => {
 };
 
 // 用户签到
-const userCheckIn = async (user_id, sign_id, sign_time) => {
-  const statement = `insert into sign_user(user_id, sign_id, sign_time) values('${user_id}', '${sign_id}', '${sign_time}')`;
+const userCheckIn = async (user_id, sign_id, sign_time, mac, is_mac_error) => {
+  const statement = `insert into sign_user(user_id, sign_id, sign_time, now_user_mac, is_mac_error) values('${user_id}', '${sign_id}', '${sign_time}', '${mac}', ${is_mac_error})`;
   const result = await connections.execute(statement);
 
   return result[0];
@@ -43,7 +43,7 @@ const userCheckIn = async (user_id, sign_id, sign_time) => {
 
 // 用户查看签到记录
 const selectSignHistory = async (user_id) => {
-  const statement = `select sgroup.group_name, initiator.initiator_name, sign_user.sign_time from initiator
+  const statement = `select sgroup.group_name, initiator.initiator_name, sign_user.sign_time, sign_user.is_mac_error from initiator
   join sgroup on sgroup.initiator_id = initiator.initiator_id
   join sign on sign.group_id = sgroup.group_id
   join sign_user on sign_user.sign_id = sign.sign_id and user_id = '${user_id}';`;
@@ -54,7 +54,7 @@ const selectSignHistory = async (user_id) => {
 
 // 管理员查看签到记录
 const selectSignHistoryByUserName = async (user_name) => {
-  const statement = `select user.user_name, sgroup.group_name, initiator.initiator_name, sign_user.sign_time from initiator
+  const statement = `select user.user_name, sgroup.group_name, initiator.initiator_name, sign_user.sign_time, sign_user.is_mac_error from initiator
   join sgroup on sgroup.initiator_id = initiator.initiator_id
   join sign on sign.group_id = sgroup.group_id
   join sign_user on sign_user.sign_id = sign.sign_id 
@@ -92,6 +92,24 @@ const insertUserInfo = async (datas) => {
   return result[0];
 };
 
+// 查找用户通过user_id
+const selectUserByUserId = async (user_id) => {
+  const statement = `select * from user where user_id = '${user_id}'`;
+  const result = await connections.execute(statement);
+
+  return result[0];
+};
+
+// 更新用户的mac
+const updateUserMacByUserId = async (mac, user_id) => {
+  const statement = `update user set user_mac = '${mac}' where user_id = '${user_id}'`;
+  const result = await connections.execute(statement);
+
+  console.log(result);
+
+  return result[0];
+};
+
 module.exports = {
   selectGroupByInitiatorName,
   createNewSign,
@@ -102,5 +120,7 @@ module.exports = {
   selectSignBySignAndUserId,
   insertUserInfo,
   selectSignHistoryByUserName,
-  selectAllUser
+  selectAllUser,
+  selectUserByUserId,
+  updateUserMacByUserId
 };

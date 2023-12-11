@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { Worker } = require("worker_threads");
+const process = require("process");
 
 const select = require("@inquirer/select");
 const input = require("@inquirer/input");
@@ -18,7 +19,7 @@ const {
 
 const { formatDateTime, formatUTC } = require("./utils/time");
 const { generateRandomString, delay } = require("./utils/main");
-const { chalkSecondConsole, chalkMainConsole, chalkThirdConsole } = require("./utils/console");
+const { chalkSecondConsole, chalkMainConsole, chalkThirdConsole, chalkSuccessConsole } = require("./utils/console");
 const { getJavaEnv, openBrowser } = require("./utils/env");
 
 const server_threads = path.resolve(__dirname, "./server/server.js");
@@ -36,6 +37,10 @@ const instrBranch = [
           name: item.group_name,
           value: item.group_name
         }));
+        new_group_data.push({
+          name: "仅开启服务器",
+          value: "_only_open_server"
+        });
 
         // 选择群组
         const group = await select.default({
@@ -43,17 +48,19 @@ const instrBranch = [
           choices: new_group_data
         });
 
-        // 新建签到
-        const group_info = group_data.find((item) => item.group_name === group);
+        if (group !== "_only_open_server") {
+          // 新建签到
+          const group_info = group_data.find((item) => item.group_name === group);
 
-        const sign_id = new Date().getTime();
-        const group_id = group_info.group_id;
-        const initiator_id = userInfo[0].initiator_id;
-        const sign_code = generateRandomString();
+          const sign_id = new Date().getTime();
+          const group_id = group_info.group_id;
+          const initiator_id = userInfo[0].initiator_id;
+          const sign_code = generateRandomString();
 
-        console.log(`签到码：${chalkSecondConsole(sign_code, true)}`);
+          console.log(`签到码：${chalkSecondConsole(sign_code, true)}`);
 
-        await createNewSign(sign_id, group_id, initiator_id, sign_code);
+          await createNewSign(sign_id, group_id, initiator_id, sign_code);
+        }
 
         // 子线程处理
         const worker = new Worker(server_threads);
@@ -68,19 +75,21 @@ const instrBranch = [
 
             // 关闭签到
             const last_at = formatDateTime(new Date().getTime());
-            await endSign(sign_id, last_at);
+            if (group !== "_only_open_server") {
+              await endSign(sign_id, last_at);
+            }
 
             resolve();
           }
         });
 
-        chalkMainConsole(`${group}开始签到~`);
+        chalkMainConsole(group === "_only_open_server" ? "仅开启服务器" : `${group}开始签到~`);
         while (true) {
           const server_answer = await input.default({ message: "如果需要关闭签到请输入 [close]: \n" });
 
           if (server_answer === "close") {
             worker.postMessage("server:close");
-            chalkMainConsole(`${group}签到结束~`);
+            chalkMainConsole(group === "_only_open_server" ? "仅开启服务器" : `${group}签到结束~`);
 
             break;
           } else {
@@ -115,7 +124,9 @@ const instrBranch = [
         } else {
           result.forEach((item) => {
             console.log(
-              `姓名:${item.user_name} 群组:${item.group_name} 发起者:${item.initiator_name} 签到时间:${formatUTC(item.sign_time)}`
+              `姓名:${item.user_name} 群组:${item.group_name} 发起者:${item.initiator_name} 签到时间:${formatUTC(
+                item.sign_time
+              )} 是否异常:${item.is_mac_error === 1 ? chalkSuccessConsole("正常", true) : chalkSecondConsole("异常", true)}`
             );
           });
         }
@@ -238,16 +249,28 @@ const instrBranch = [
       if (sign_infos.length > 0) {
         // 组合字符
         let sign_info_write = "";
-        sign_infos.forEach((item) => {
-          sign_info_write += `${item.user_name} ${item.group_name} ${item.initiator_name} ${formatUTC(item.sign_time)}\n`;
+        sign_infos.forEach((item, index) => {
+          sign_info_write += `${index} ${item.user_name} ${item.group_name} ${item.initiator_name} ${formatUTC(item.sign_time)} ${
+            item.is_mac_error === 1 ? "正常" : "异常"
+          }\n`;
         });
 
         // 写入数据
         const write_path = path.resolve(__dirname, "../files", `${answer}-签到记录.txt`);
         fs.writeFileSync(write_path, sign_info_write, { encoding: "utf-8" });
+
+        chalkSecondConsole(`请查看files文件夹:${answer}-签到记录.txt`);
       } else {
         console.log("没有可以导出的数据哦~");
       }
+    }
+  ],
+  // 退出
+  [
+    (flag) => flag === "tc",
+    async (userInfo) => {
+      chalkMainConsole(`退出了~ byebye`);
+      process.exit();
     }
   ],
   // 源码

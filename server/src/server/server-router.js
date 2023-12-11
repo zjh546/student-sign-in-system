@@ -6,7 +6,14 @@ const jwt = require("jsonwebtoken");
 
 const connections = require("./database");
 
-const { selectSignBySignCode, userCheckIn, selectSignHistory, selectSignBySignAndUserId } = require("./database-sql");
+const {
+  selectSignBySignCode,
+  userCheckIn,
+  selectSignHistory,
+  selectSignBySignAndUserId,
+  selectUserByUserId,
+  updateUserMacByUserId
+} = require("./database-sql");
 const { issueToken, verifyToken } = require("../utils/jwt");
 const { formatDateTime } = require("../utils/time");
 const { chalkThirdConsole } = require("../utils/console");
@@ -93,47 +100,42 @@ router.post("/login", isUserExist, (req, res, next) => {
 // 03 - 用户签到
 router.post("/sign", verifyUserToken, async (req, res, next) => {
   const userInfo = req.userInfo;
-  const { sign_code } = req.body;
+  const { sign_code, mac } = req.body;
 
+  // 更新Mac
+  const user_result = await selectUserByUserId(userInfo.user_id);
+  if (user_result.length > 0) {
+    const user_mac = user_result[0].user_mac;
+    if (!user_mac) await updateUserMacByUserId(mac, userInfo.user_id);
+  }
+
+  // 用户签到
   const sign_datas = await selectSignBySignCode(sign_code);
   if (sign_datas.length > 0) {
     const sign_info = sign_datas[0];
-
     // 查找该用户是否签到
     const sign_user_info = await selectSignBySignAndUserId(sign_info.sign_id, userInfo.user_id);
     if (sign_user_info.length > 0) {
       res.status(400);
-      res.json({
-        code: 400,
-        data: "exist~"
-      });
+      res.json({ code: 400, data: "exist~" });
     } else {
       try {
         const sign_time = formatDateTime(new Date().getTime());
-
-        await userCheckIn(userInfo.user_id, sign_info.sign_id, sign_time);
+        const is_mac_error = user_result[0].user_mac === mac ? 1 : 0; // 1表示正常 0表示异常
+        await userCheckIn(userInfo.user_id, sign_info.sign_id, sign_time, mac, is_mac_error);
 
         chalkThirdConsole(`${userInfo.user_name} 已经签到`);
 
         res.status(200);
-        res.json({
-          code: 200,
-          data: "ok"
-        });
+        res.json({ code: 200, data: "ok" });
       } catch (error) {
         res.status(400);
-        res.json({
-          code: 400,
-          data: "error~"
-        });
+        res.json({ code: 400, data: "error~" });
       }
     }
   } else {
     res.status(400);
-    res.json({
-      code: 400,
-      data: "签到码错误~"
-    });
+    res.json({ code: 400, data: "签到码错误~" });
   }
 });
 

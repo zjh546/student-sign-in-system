@@ -5,7 +5,8 @@ export interface IEDeskHeaderAPI {
 }
 
 export interface IDeskMainAPI {
-  DownloadImage: (downloadImage: string, upload_img: string) => void;
+  DownloadImage: (downloadImage: string, upload_img: string) => string;
+  getMacV2: () => string;
 }
 
 declare global {

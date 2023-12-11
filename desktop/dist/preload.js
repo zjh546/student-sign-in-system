@@ -6,5 +6,6 @@ import_electron.contextBridge.exposeInMainWorld("DeskTopHeader", {
   HeaderClose: () => import_electron.ipcRenderer.send("HeaderClose" /* HeaderClose */)
 });
 import_electron.contextBridge.exposeInMainWorld("DeskMainAPI", {
-  DownloadImage: (downloadImgPath, upload_img) => import_electron.ipcRenderer.invoke("DownloadImage", downloadImgPath, upload_img)
+  DownloadImage: (downloadImgPath, upload_img) => import_electron.ipcRenderer.invoke("DownloadImage", downloadImgPath, upload_img),
+  getMacV2: () => import_electron.ipcRenderer.invoke("getMacV2")
 });

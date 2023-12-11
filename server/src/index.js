@@ -76,6 +76,7 @@ const instrBranchHandler = (flag, ...params) => {
           { name: "查看记录", value: "ck" },
           { name: "导入信息", value: "dr" },
           { name: "导出信息", value: "dc" },
+          { name: "退出程序", value: "tc" },
           { name: "查看源码", value: "ym" }
         ]
       });

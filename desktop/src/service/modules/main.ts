@@ -9,10 +9,10 @@ export const userLogin = (info: any) => {
 };
 
 // 用户签到
-export const userSign = (sign_code: string) => {
+export const userSign = (sign_code: string, mac: string) => {
   return RequestService.post({
     url: "/api/sign",
-    data: { sign_code }
+    data: { sign_code, mac }
   });
 };
 

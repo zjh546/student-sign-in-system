@@ -10,5 +10,6 @@ contextBridge.exposeInMainWorld("DeskTopHeader", {
 
 contextBridge.exposeInMainWorld("DeskMainAPI", {
   DownloadImage: (downloadImgPath: string, upload_img: string) =>
-    ipcRenderer.invoke("DownloadImage", downloadImgPath, upload_img)
+    ipcRenderer.invoke("DownloadImage", downloadImgPath, upload_img),
+  getMacV2: () => ipcRenderer.invoke("getMacV2")
 });
