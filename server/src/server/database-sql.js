@@ -110,6 +110,14 @@ const updateUserMacByUserId = async (mac, user_id) => {
   return result[0];
 };
 
+// 查找发起者的未结束的签到码
+const selectSignByInitiatorId_isFinsh = async (initiator_id) => {
+  const statement = `select * from sign where initiator_id = '${initiator_id}' and isFinsh = 1 order by create_at desc`;
+  const result = await connections.execute(statement);
+
+  return result[0];
+};
+
 module.exports = {
   selectGroupByInitiatorName,
   createNewSign,
@@ -122,5 +130,6 @@ module.exports = {
   selectSignHistoryByUserName,
   selectAllUser,
   selectUserByUserId,
-  updateUserMacByUserId
+  updateUserMacByUserId,
+  selectSignByInitiatorId_isFinsh
 };

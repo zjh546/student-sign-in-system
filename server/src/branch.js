@@ -14,7 +14,10 @@ const {
   endSign,
   insertUserInfo,
   selectAllUser,
-  selectSignHistoryByUserName
+  selectSignHistoryByUserName,
+  selectSignByInitiatorId_isFinsh,
+  selectSignBySignAndUserId,
+  userCheckIn
 } = require("./server/database-sql");
 
 const { formatDateTime, formatUTC } = require("./utils/time");
@@ -48,11 +51,11 @@ const instrBranch = [
           choices: new_group_data
         });
 
+        const sign_id = new Date().getTime();
         if (group !== "_only_open_server") {
           // 新建签到
           const group_info = group_data.find((item) => item.group_name === group);
 
-          const sign_id = new Date().getTime();
           const group_id = group_info.group_id;
           const initiator_id = userInfo[0].initiator_id;
           const sign_code = generateRandomString();
@@ -129,6 +132,54 @@ const instrBranch = [
               )} 是否异常:${item.is_mac_error === 1 ? chalkSuccessConsole("正常", true) : chalkSecondConsole("异常", true)}`
             );
           });
+        }
+
+        console.log("\n");
+      }
+    }
+  ],
+  // 补签
+  [
+    (flag) => flag === "bq",
+    async (userInfo) => {
+      // 查找用户
+      const choices = [];
+      const allUser = await selectAllUser(userInfo[0].initiator_id);
+      allUser.forEach((item) => choices.push({ name: item.user_name, value: item.user_id }));
+      choices.push({ name: "退出补签", value: "_replenish_close" });
+
+      // 查找签到码
+      const code_choices = [];
+      const allSignCode = await selectSignByInitiatorId_isFinsh(userInfo[0].initiator_id);
+      allSignCode.forEach((item, index) => {
+        code_choices.push({ name: index === 0 ? `${item.sign_code}(最新)` : item.sign_code, value: item.sign_id });
+      });
+      code_choices.push({ name: "退出补签", value: "_replenish_close" });
+
+      while (true) {
+        const answer = await select.default({
+          message: "请选择你要补签的用户~",
+          choices: choices
+        });
+
+        if (answer === "_replenish_close") break;
+
+        const code_answer = await select.default({
+          message: "请选择签到码~",
+          choices: code_choices
+        });
+
+        if (code_answer === "_replenish_close") break;
+
+        const result = await selectSignBySignAndUserId(code_answer, answer);
+        if (result.length > 0) {
+          chalkSecondConsole("该用户已经签到了哦~");
+        } else {
+          const is_mac_error = 1; // 1表示正常 0表示异常
+          const sign_time = formatDateTime(new Date().getTime());
+          await userCheckIn(answer, code_answer, sign_time, "_initiator_help_", is_mac_error);
+
+          chalkThirdConsole("补签成功~");
         }
 
         console.log("\n");

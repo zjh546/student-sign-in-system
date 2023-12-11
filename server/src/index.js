@@ -74,6 +74,7 @@ const instrBranchHandler = (flag, ...params) => {
         choices: [
           { name: "开启签到", value: "qd" },
           { name: "查看记录", value: "ck" },
+          { name: "帮忙补签", value: "bq" },
           { name: "导入信息", value: "dr" },
           { name: "导出信息", value: "dc" },
           { name: "退出程序", value: "tc" },
